@@ -25,9 +25,18 @@ def handleQuery(query):
 
     query.disableSort()
     stripped = query.string.strip()
-    res = json.loads(subprocess.check_output(['uni', 'search', '-format=all', '-as=json', stripped], encoding='utf-8'))
+    try:
+        output = subprocess.check_output(
+            ['uni', 'search', '-format=all', '-as=json', stripped],
+            stderr=subprocess.STDOUT,
+            encoding='utf-8',
+        )
+    except subprocess.CalledProcessError as e:
+        if e.returncode == 1 and e.output == 'uni: no matches\n':
+            return None
+        raise
     items = []
-    for entry in res:
+    for entry in json.loads(output):
         items.append(
             Item(
                 id=__title__,

@@ -33,53 +33,42 @@ def handleQuery(query):
         if e.returncode == 1 and e.output == 'uni: no matches\n':
             return None
         raise
+
     entries = json.loads(output)
-    for entry in entries:
-        entry['utf8'] = '\\x' + '\\x'.join(entry['utf8'].split(' '))
+    entries_clips = [
+        {
+            'Copy Char': entry['char'],
+            'Copy JSON': entry['json'],
+            'Copy HTML': entry['html'],
+            'Copy UTF-8 bytes': '\\x' + '\\x'.join(entry['utf8'].split(' ')),
+            'Copy All': json.dumps(entry, indent=4, sort_keys=True),
+        }
+        for entry in entries
+    ]
+
     items = []
-    for entry in entries:
+    for entry, entry_clips in zip(entries, entries_clips):
         items.append(
             Item(
                 id=__title__,
                 icon=ICON_PATH,
                 text=entry['char'],
                 subtext=f'{entry["cat"]}: {entry["name"]}',
-                actions=[
-                    ClipAction(text='Copy Char', clipboardText=entry['char']),
-                    ClipAction(text='Copy JSON', clipboardText=entry['json']),
-                    ClipAction(text='Copy HTML', clipboardText=entry['html']),
-                    ClipAction(text='Copy UTF-8 bytes', clipboardText=entry['utf8']),
-                    ClipAction(text='Copy All', clipboardText=json.dumps(entry, indent=4, sort_keys=True)),
-                ],
+                actions=[ClipAction(text=key, clipboardText=value) for key, value in entry_clips.items()],
             )
         )
 
-    items.append(
-        Item(
-            id=__title__,
-            icon=ICON_PATH,
-            text='All',
-            actions=[
-                ClipAction(text='Copy Char', clipboardText='\n'.join(entry['char'] for entry in entries)),
-                ClipAction(
-                    text='Copy JSON',
-                    clipboardText='\n'.join(f'{entry["char"]} {entry["json"]}' for entry in entries),
-                ),
-                ClipAction(
-                    text='Copy HTML',
-                    clipboardText='\n'.join(f'{entry["char"]} {entry["html"]}' for entry in entries),
-                ),
-                ClipAction(
-                    text='Copy UTF-8 bytes',
-                    clipboardText='\n'.join(f'{entry["char"]} {entry["utf8"]}' for entry in entries),
-                ),
-                ClipAction(
-                    text='Copy All',
-                    clipboardText='\n'.join(
-                        f'{entry["char"]} {json.dumps(entry, indent=4, sort_keys=True)}' for entry in entries
-                    ),
-                ),
-            ],
+    if entries:
+        all_clips = {key: '' for key in entries_clips[0]}
+        for entry, entry_clips in zip(entries, entries_clips):
+            for key, value in entry_clips.items():
+                all_clips[key] += f'{entry["char"]}\n' if key == 'Copy Char' else f'{entry["char"]} {value}\n'
+        items.append(
+            Item(
+                id=__title__,
+                icon=ICON_PATH,
+                text='All',
+                actions=[ClipAction(text=key, clipboardText=value) for key, value in all_clips.items()],
+            )
         )
-    )
     return items

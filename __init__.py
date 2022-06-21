@@ -17,24 +17,26 @@ __exec_deps__ = ['uni']
 ICON_PATH = str(Path(__file__).parent / 'icons/unicode.svg')
 
 
-def handleQuery(query):
-    if not query.isTriggered or not query.string.strip():
-        return None
-
-    query.disableSort()
-    stripped = query.string.strip()
+def find_unicode(query_str):
     try:
         output = subprocess.check_output(
-            ['uni', 'search', '-format=all', '-as=json', stripped],
+            ['uni', 'search', '-format=all', '-as=json', query_str],
             stderr=subprocess.STDOUT,
             encoding='utf-8',
         )
     except subprocess.CalledProcessError as e:
         if e.returncode == 1 and e.output == 'uni: no matches\n':
-            return None
+            return []
         raise
+    return json.loads(output)
 
-    entries = json.loads(output)
+
+def handleQuery(query):
+    if not query.isTriggered or not query.string.strip():
+        return None
+
+    query.disableSort()
+    entries = find_unicode(query.string.strip())
     entries_clips = [
         {
             'Copy Char': entry['char'],

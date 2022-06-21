@@ -42,7 +42,7 @@ def handleQuery(query):
             'Copy Char': entry['char'],
             'Copy JSON': entry['json'],
             'Copy HTML': entry['html'],
-            'Copy UTF-8 bytes': '\\x' + '\\x'.join(entry['utf8'].split(' ')),
+            'Copy UTF-8 bytes': entry['utf8'],
             'Copy All': json.dumps(entry, indent=4, sort_keys=True),
         }
         for entry in entries

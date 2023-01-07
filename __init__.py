@@ -1,23 +1,26 @@
-'''Finds unicode.
-
-Synopsis: <trigger> <query>'''
 import json
 import subprocess
 from pathlib import Path
+from typing import Dict, List
 
-from albert import ClipAction, Item  # pylint: disable=import-error
+from albert import Action, Item, Query, QueryHandler, setClipboardText  # pylint: disable=import-error
 
 
-__title__ = 'Unicode'
-__version__ = '0.0.1'
-__triggers__ = 'u '
-__authors__ = ['Steven Xu']
-__exec_deps__ = ['uni']
+md_iid = '0.5'
+md_version = '1.0'
+md_name = 'Unicode'
+md_description = 'Finds unicode.'
+md_url = 'https://github.com/stevenxxiu/albert_unicode'
+md_maintainers = '@stevenxxiu'
+md_bin_dependencies = ['uni']
 
 ICON_PATH = str(Path(__file__).parent / 'icons/unicode.svg')
 
+# Can crash if this is too large
+MAX_DISPLAYED = 10
 
-def find_unicode(query_str):
+
+def find_unicode(query_str: str) -> List[Dict]:
     try:
         output = subprocess.check_output(
             ['uni', 'search', '-format=all', '-as=json', query_str],
@@ -31,45 +34,72 @@ def find_unicode(query_str):
     return json.loads(output)
 
 
-def handleQuery(query):
-    if not query.isTriggered or not query.string.strip():
-        return None
+class Plugin(QueryHandler):
+    @staticmethod
+    def id() -> str:
+        return __name__
 
-    entries = find_unicode(query.string.strip())
-    entries_clips = [
-        {
-            'Copy Char': entry['char'],
-            'Copy JSON': entry['json'],
-            'Copy HTML': entry['html'],
-            'Copy UTF-8 bytes': entry['utf8'],
-            'Copy All': json.dumps(entry, indent=4, sort_keys=True),
-        }
-        for entry in entries
-    ]
+    @staticmethod
+    def name() -> str:
+        return md_name
 
-    items = []
-    for entry, entry_clips in zip(entries, entries_clips):
-        items.append(
-            Item(
-                id=f'{__title__}/{entry["char"]}',
-                icon=ICON_PATH,
-                text=entry['char'],
-                subtext=f'{entry["cat"]}: {entry["name"]}',
-                actions=[ClipAction(text=key, clipboardText=value) for key, value in entry_clips.items()],
-            )
-        )
+    @staticmethod
+    def description() -> str:
+        return md_description
 
-    if entries:
-        all_clips = {key: '' for key in entries_clips[0]}
+    @staticmethod
+    def defaultTrigger() -> str:
+        return 'u'
+
+    @staticmethod
+    def synopsis() -> str:
+        return 'query'
+
+    @staticmethod
+    def handleQuery(query: Query) -> None:
+        query_str = query.string.strip()
+        if not query_str:
+            return
+
+        entries = find_unicode(query_str)[:MAX_DISPLAYED]
+        entries_clips = [
+            {
+                'Copy Char': entry['char'],
+                'Copy JSON': entry['json'],
+                'Copy HTML': entry['html'],
+                'Copy UTF-8 bytes': entry['utf8'],
+                'Copy All': json.dumps(entry, indent=4, sort_keys=True),
+            }
+            for entry in entries
+        ]
+
         for entry, entry_clips in zip(entries, entries_clips):
-            for key, value in entry_clips.items():
-                all_clips[key] += f'{entry["char"]}\n' if key == 'Copy Char' else f'{entry["char"]} {value}\n'
-        items.append(
-            Item(
-                id=f'{__title__}/All',
-                icon=ICON_PATH,
-                text='All',
-                actions=[ClipAction(text=key, clipboardText=value) for key, value in all_clips.items()],
+            query.add(
+                Item(
+                    id=f'{md_name}/{entry["char"]}',
+                    text=entry['char'],
+                    subtext=f'{entry["cat"]}: {entry["name"]}',
+                    icon=[ICON_PATH],
+                    actions=[
+                        Action(f'{md_name}/{entry["char"]}/{key}', key, lambda value_=value: setClipboardText(value_))
+                        for key, value in entry_clips.items()
+                    ],
+                )
             )
-        )
-    return items
+
+        if entries:
+            all_clips = {key: '' for key in entries_clips[0]}
+            for entry, entry_clips in zip(entries, entries_clips):
+                for key, value in entry_clips.items():
+                    all_clips[key] += f'{entry["char"]}\n' if key == 'Copy Char' else f'{entry["char"]} {value}\n'
+            query.add(
+                Item(
+                    id=f'{md_name}/All',
+                    text='All',
+                    icon=[ICON_PATH],
+                    actions=[
+                        Action(f'{md_name}/all/{key}', key, lambda value_=value: setClipboardText(value_))
+                        for key, value in all_clips.items()
+                    ],
+                )
+            )

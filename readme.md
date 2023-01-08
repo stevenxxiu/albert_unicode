@@ -1,4 +1,4 @@
-# Unicode Extension
+# Albert Launcher Unicode Extension
 ## Install
 To install, copy or symlink this directory to `~/.local/share/albert/org.albert.extension.python/modules/unicode/`.
 

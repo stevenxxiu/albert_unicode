@@ -1,7 +1,6 @@
 import json
 import subprocess
 from pathlib import Path
-from typing import Dict, List
 
 from albert import Action, Item, Query, QueryHandler, setClipboardText  # pylint: disable=import-error
 
@@ -21,7 +20,7 @@ ICON_PATH = str(Path(__file__).parent / 'icons/unicode.svg')
 MAX_DISPLAYED = 10
 
 
-def find_unicode(query_str: str) -> List[Dict]:
+def find_unicode(query_str: str) -> list[dict]:
     try:
         output = subprocess.check_output(
             ['uni', 'search', '-format=all', '-as=json', query_str],

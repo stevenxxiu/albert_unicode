@@ -16,9 +16,6 @@ md_bin_dependencies = ['uni']
 TRIGGER = 'u'
 ICON_PATH = str(Path(__file__).parent / 'icons/unicode.svg')
 
-# Can crash if this is too large
-MAX_DISPLAYED = 10
-
 
 def find_unicode(query_str: str) -> list[dict]:
     try:
@@ -55,7 +52,7 @@ class Plugin(QueryHandler):
         if not query_str:
             return
 
-        entries = find_unicode(query_str)[:MAX_DISPLAYED]
+        entries = find_unicode(query_str)
         entries_clips = [
             {
                 'Copy Char': entry['char'],

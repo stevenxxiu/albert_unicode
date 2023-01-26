@@ -8,7 +8,7 @@ from albert import Action, Item, Query, QueryHandler, setClipboardText  # pylint
 md_iid = '0.5'
 md_version = '1.0'
 md_name = 'Unicode'
-md_description = 'Finds unicode.'
+md_description = 'Finds unicode'
 md_url = 'https://github.com/stevenxxiu/albert_unicode'
 md_maintainers = '@stevenxxiu'
 md_bin_dependencies = ['uni']

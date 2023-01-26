@@ -15,6 +15,7 @@ md_bin_dependencies = ['uni']
 
 TRIGGER = 'u'
 ICON_PATH = str(Path(__file__).parent / 'icons/unicode.svg')
+MAX_DISPLAYED = 20  # Can hang if this is too large
 
 
 def find_unicode(query_str: str) -> list[dict]:
@@ -29,6 +30,31 @@ def find_unicode(query_str: str) -> list[dict]:
             return []
         raise
     return json.loads(output)
+
+
+def get_entry_clips(entry: dict) -> dict:
+    return {
+        'Copy Char': entry['char'],
+        'Copy JSON': entry['json'],
+        'Copy HTML': entry['html'],
+        'Copy UTF-8 bytes': entry['utf8'],
+        'Copy All': json.dumps(entry, indent=4, sort_keys=True),
+    }
+
+
+def create_all_clipboard_text(action_name: str, entries: list[dict]) -> str:
+    match action_name:
+        case 'Copy Char':
+            return '\n'.join(entry['char'] for entry in entries) + '\n'
+        case 'Copy JSON':
+            return '\n'.join(f'{entry["char"]} {entry["json"]}' for entry in entries) + '\n'
+        case 'Copy HTML':
+            return '\n'.join(f'{entry["char"]} {entry["html"]}' for entry in entries) + '\n'
+        case 'Copy UTF-8 bytes':
+            return '\n'.join(f'{entry["char"]} {entry["utf8"]}' for entry in entries) + '\n'
+        case 'Copy All':
+            return '\n'.join(json.dumps(entry, indent=4, sort_keys=True) for entry in entries) + '\n'
+    raise ValueError
 
 
 class Plugin(QueryHandler):
@@ -52,19 +78,10 @@ class Plugin(QueryHandler):
         if not query_str:
             return
 
-        entries = find_unicode(query_str)
-        entries_clips = [
-            {
-                'Copy Char': entry['char'],
-                'Copy JSON': entry['json'],
-                'Copy HTML': entry['html'],
-                'Copy UTF-8 bytes': entry['utf8'],
-                'Copy All': json.dumps(entry, indent=4, sort_keys=True),
-            }
-            for entry in entries
-        ]
+        all_entries = find_unicode(query_str)
+        entries = all_entries[:MAX_DISPLAYED]
 
-        for entry, entry_clips in zip(entries, entries_clips):
+        for entry in entries:
             query.add(
                 Item(
                     id=f'{md_name}/{entry["char"]}',
@@ -73,24 +90,25 @@ class Plugin(QueryHandler):
                     icon=[ICON_PATH],
                     actions=[
                         Action(f'{md_name}/{entry["char"]}/{key}', key, lambda value_=value: setClipboardText(value_))
-                        for key, value in entry_clips.items()
+                        for key, value in get_entry_clips(entry).items()
                     ],
                 )
             )
 
-        if entries:
-            all_clips = {key: '' for key in entries_clips[0]}
-            for entry, entry_clips in zip(entries, entries_clips):
-                for key, value in entry_clips.items():
-                    all_clips[key] += f'{entry["char"]}\n' if key == 'Copy Char' else f'{entry["char"]} {value}\n'
+        if all_entries:
             query.add(
                 Item(
                     id=f'{md_name}/All',
                     text='All',
+                    subtext=f'{len(entries)}/{len(all_entries)} displayed',
                     icon=[ICON_PATH],
                     actions=[
-                        Action(f'{md_name}/all/{key}', key, lambda value_=value: setClipboardText(value_))
-                        for key, value in all_clips.items()
+                        Action(
+                            f'{md_name}/all/{key}',
+                            key,
+                            lambda key_=key: setClipboardText(create_all_clipboard_text(key_, all_entries)),
+                        )
+                        for key, value in get_entry_clips(entries[0]).items()
                     ],
                 )
             )

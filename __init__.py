@@ -13,7 +13,6 @@ md_url = 'https://github.com/stevenxxiu/albert_unicode'
 md_maintainers = '@stevenxxiu'
 md_bin_dependencies = ['uni']
 
-TRIGGER = 'u'
 ICON_PATH = str(Path(__file__).parent / 'icons/unicode.svg')
 MAX_DISPLAYED = 20  # Can hang if this is too large
 
@@ -68,7 +67,7 @@ class Plugin(QueryHandler):
         return md_description
 
     def defaultTrigger(self) -> str:
-        return f'{TRIGGER} '
+        return 'u '
 
     def synopsis(self) -> str:
         return 'query'

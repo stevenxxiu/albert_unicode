@@ -1,6 +1,10 @@
 # Albert Launcher Unicode Extension
 Finds Unicode.
 
+Dependencies:
+
+- [uni](https://github.com/arp242/uni)
+
 ## Install
 To install, copy or symlink this directory to `~/.local/share/albert/org.albert.extension.python/modules/unicode/`.
 

@@ -2,11 +2,11 @@ import json
 import subprocess
 from pathlib import Path
 
-from albert import Action, Item, Query, QueryHandler, setClipboardText  # pylint: disable=import-error
+from albert import Action, Item, TriggerQuery, TriggerQueryHandler, setClipboardText  # pylint: disable=import-error
 
 
-md_iid = '0.5'
-md_version = '1.0'
+md_iid = '1.0'
+md_version = '1.1'
 md_name = 'Unicode'
 md_description = 'Finds Unicode'
 md_url = 'https://github.com/stevenxxiu/albert_unicode'
@@ -56,7 +56,7 @@ def create_all_clipboard_text(action_name: str, entries: list[dict]) -> str:
     raise ValueError
 
 
-class Plugin(QueryHandler):
+class Plugin(TriggerQueryHandler):
     def id(self) -> str:
         return __name__
 
@@ -72,7 +72,7 @@ class Plugin(QueryHandler):
     def synopsis(self) -> str:
         return 'query'
 
-    def handleQuery(self, query: Query) -> None:
+    def handleTriggerQuery(self, query: TriggerQuery) -> None:
         query_str = query.string.strip()
         if not query_str:
             return

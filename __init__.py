@@ -2,18 +2,25 @@ import json
 import subprocess
 from pathlib import Path
 
-from albert import Action, Item, TriggerQuery, TriggerQueryHandler, setClipboardText  # pylint: disable=import-error
+from albert import (  # pylint: disable=import-error
+    Action,
+    PluginInstance,
+    StandardItem,
+    TriggerQuery,
+    TriggerQueryHandler,
+    setClipboardText,
+)
 
 
-md_iid = '1.0'
-md_version = '1.1'
+md_iid = '2.0'
+md_version = '1.2'
 md_name = 'Unicode'
 md_description = 'Finds Unicode'
 md_url = 'https://github.com/stevenxxiu/albert_unicode'
 md_maintainers = '@stevenxxiu'
 md_bin_dependencies = ['uni']
 
-ICON_PATH = str(Path(__file__).parent / 'icons/unicode.svg')
+ICON_URL = f'file:{Path(__file__).parent / "icons/unicode.svg"}'
 MAX_DISPLAYED = 20  # Can hang if this is too large
 
 
@@ -56,21 +63,12 @@ def create_all_clipboard_text(action_name: str, entries: list[dict]) -> str:
     raise ValueError
 
 
-class Plugin(TriggerQueryHandler):
-    def id(self) -> str:
-        return __name__
-
-    def name(self) -> str:
-        return md_name
-
-    def description(self) -> str:
-        return md_description
-
-    def defaultTrigger(self) -> str:
-        return 'u '
-
-    def synopsis(self) -> str:
-        return 'query'
+class Plugin(PluginInstance, TriggerQueryHandler):
+    def __init__(self):
+        TriggerQueryHandler.__init__(
+            self, id=__name__, name=md_name, description=md_description, synopsis='query', defaultTrigger='u '
+        )
+        PluginInstance.__init__(self, extensions=[self])
 
     def handleTriggerQuery(self, query: TriggerQuery) -> None:
         query_str = query.string.strip()
@@ -82,11 +80,11 @@ class Plugin(TriggerQueryHandler):
 
         for entry in entries:
             query.add(
-                Item(
+                StandardItem(
                     id=f'{md_name}/{entry["char"]}',
                     text=entry['char'],
                     subtext=f'{entry["cat"]}: {entry["name"]}',
-                    icon=[ICON_PATH],
+                    iconUrls=[ICON_URL],
                     actions=[
                         Action(f'{md_name}/{entry["char"]}/{key}', key, lambda value_=value: setClipboardText(value_))
                         for key, value in get_entry_clips(entry).items()
@@ -96,11 +94,11 @@ class Plugin(TriggerQueryHandler):
 
         if all_entries:
             query.add(
-                Item(
+                StandardItem(
                     id=f'{md_name}/All',
                     text='All',
                     subtext=f'{len(entries)}/{len(all_entries)} displayed',
-                    icon=[ICON_PATH],
+                    iconUrls=[ICON_URL],
                     actions=[
                         Action(
                             f'{md_name}/all/{key}',

@@ -6,14 +6,13 @@ from albert import (  # pylint: disable=import-error
     Action,
     PluginInstance,
     StandardItem,
-    TriggerQuery,
     TriggerQueryHandler,
     setClipboardText,
 )
 
 
-md_iid = '2.0'
-md_version = '1.2'
+md_iid = '2.3'
+md_version = '1.3'
 md_name = 'Unicode'
 md_description = 'Finds Unicode'
 md_url = 'https://github.com/stevenxxiu/albert_unicode'
@@ -68,9 +67,9 @@ class Plugin(PluginInstance, TriggerQueryHandler):
         TriggerQueryHandler.__init__(
             self, id=__name__, name=md_name, description=md_description, synopsis='query', defaultTrigger='u '
         )
-        PluginInstance.__init__(self, extensions=[self])
+        PluginInstance.__init__(self)
 
-    def handleTriggerQuery(self, query: TriggerQuery) -> None:
+    def handleTriggerQuery(self, query) -> None:
         query_str = query.string.strip()
         if not query_str:
             return

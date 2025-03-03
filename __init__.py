@@ -2,7 +2,7 @@ import json
 import subprocess
 from pathlib import Path
 
-from albert import (  # pylint: disable=import-error
+from albert import (
     Action,
     PluginInstance,
     StandardItem,
@@ -10,13 +10,13 @@ from albert import (  # pylint: disable=import-error
     setClipboardText,
 )
 
-
-md_iid = '2.3'
-md_version = '1.3'
+md_iid = '3.0'
+md_version = '1.4'
 md_name = 'Unicode'
 md_description = 'Finds Unicode'
+md_license = 'MIT'
 md_url = 'https://github.com/stevenxxiu/albert_unicode'
-md_maintainers = '@stevenxxiu'
+md_authors = ['@stevenxxiu']
 md_bin_dependencies = ['uni']
 
 ICON_URL = f'file:{Path(__file__).parent / "icons/unicode.svg"}'
@@ -64,10 +64,14 @@ def create_all_clipboard_text(action_name: str, entries: list[dict]) -> str:
 
 class Plugin(PluginInstance, TriggerQueryHandler):
     def __init__(self):
-        TriggerQueryHandler.__init__(
-            self, id=__name__, name=md_name, description=md_description, synopsis='query', defaultTrigger='u '
-        )
         PluginInstance.__init__(self)
+        TriggerQueryHandler.__init__(self)
+
+    def synopsis(self, _query: str) -> str:
+        return 'query'
+
+    def defaultTrigger(self):
+        return 'u '
 
     def handleTriggerQuery(self, query) -> None:
         query_str = query.string.strip()

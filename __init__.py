@@ -108,7 +108,7 @@ class Plugin(PluginInstance, TriggerQueryHandler):
                             key,
                             lambda key_=key: setClipboardText(create_all_clipboard_text(key_, all_entries)),
                         )
-                        for key, value in get_entry_clips(entries[0]).items()
+                        for key, _value in get_entry_clips(entries[0]).items()
                     ],
                 )
             )

@@ -6,6 +6,7 @@ from typing import Callable, TypedDict, override
 from albert import setClipboardText  # pyright: ignore[reportUnknownVariableType]
 from albert import (
     Action,
+    Item,
     PluginInstance,
     Query,
     StandardItem,
@@ -24,7 +25,7 @@ md_authors = ['@stevenxxiu']
 md_bin_dependencies = ['uni']
 
 ICON_URL = f'file:{Path(__file__).parent / "icons/unicode.svg"}'
-MAX_DISPLAYED = 20  # Can hang if this is too large
+MAX_DISPLAYED = 100
 
 
 class UniEntry(TypedDict):
@@ -98,6 +99,7 @@ class Plugin(PluginInstance, TriggerQueryHandler):
         all_entries = find_unicode(query_str)
         entries = all_entries[:MAX_DISPLAYED]
 
+        items: list[Item] = []
         actions: list[Action]
         copy_call: Callable[[str], None]
 
@@ -106,27 +108,27 @@ class Plugin(PluginInstance, TriggerQueryHandler):
             for key, value in get_entry_clips(entry).items():
                 copy_call = lambda value_=value: setClipboardText(value_)  # noqa: E731
                 actions.append(Action(f'{md_name}/{entry["char"]}/{key}', key, copy_call))
-            query.add(  # pyright: ignore[reportUnknownMemberType]
-                StandardItem(
-                    id=f'{md_name}/{entry["char"]}',
-                    text=entry['char'],
-                    subtext=f'{entry["cat"]}: {entry["name"]}',
-                    iconUrls=[ICON_URL],
-                    actions=actions,
-                )
+            item = StandardItem(
+                id=f'{md_name}/{entry["char"]}',
+                text=entry['char'],
+                subtext=f'{entry["cat"]}: {entry["name"]}',
+                iconUrls=[ICON_URL],
+                actions=actions,
             )
+            items.append(item)
 
         if all_entries:
             actions = []
             for key, _value in get_entry_clips(entries[0]).items():
                 copy_call = lambda key_=key: setClipboardText(create_all_clipboard_text(key_, all_entries))  # noqa: E731
                 actions.append(Action(f'{md_name}/all/{key}', key, copy_call))
-            query.add(  # pyright: ignore[reportUnknownMemberType]
-                StandardItem(
-                    id=f'{md_name}/All',
-                    text='All',
-                    subtext=f'{len(entries)}/{len(all_entries)} displayed',
-                    iconUrls=[ICON_URL],
-                    actions=actions,
-                )
+            item = StandardItem(
+                id=f'{md_name}/All',
+                text='All',
+                subtext=f'{len(entries)}/{len(all_entries)} displayed',
+                iconUrls=[ICON_URL],
+                actions=actions,
             )
+            items.append(item)
+
+        query.add(items)  # pyright: ignore[reportUnknownMemberType]

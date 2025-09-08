@@ -109,7 +109,7 @@ class Plugin(PluginInstance, TriggerQueryHandler):
                 copy_call = lambda value_=value: setClipboardText(value_)  # noqa: E731
                 actions.append(Action(f'{md_name}/{entry["char"]}/{key}', key, copy_call))
             item = StandardItem(
-                id=f'{md_name}/{entry["char"]}',
+                id=self.id(),
                 text=entry['char'],
                 subtext=f'{entry["cat"]}: {entry["name"]}',
                 iconUrls=[ICON_URL],
@@ -123,7 +123,7 @@ class Plugin(PluginInstance, TriggerQueryHandler):
                 copy_call = lambda key_=key: setClipboardText(create_all_clipboard_text(key_, all_entries))  # noqa: E731
                 actions.append(Action(f'{md_name}/all/{key}', key, copy_call))
             item = StandardItem(
-                id=f'{md_name}/All',
+                id=self.id(),
                 text='All',
                 subtext=f'{len(entries)}/{len(all_entries)} displayed',
                 iconUrls=[ICON_URL],

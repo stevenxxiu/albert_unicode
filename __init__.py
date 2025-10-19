@@ -11,11 +11,12 @@ from albert import (
     Query,
     StandardItem,
     TriggerQueryHandler,
+    makeImageIcon,
 )
 
 setClipboardText: Callable[[str], None]
 
-md_iid = '3.0'
+md_iid = '4.0'
 md_version = '1.4'
 md_name = 'Unicode'
 md_description = 'Finds Unicode'
@@ -24,7 +25,7 @@ md_url = 'https://github.com/stevenxxiu/albert_unicode'
 md_authors = ['@stevenxxiu']
 md_bin_dependencies = ['uni']
 
-ICON_URL = f'file:{Path(__file__).parent / "icons/unicode.svg"}'
+ICON_PATH = Path(__file__).parent / 'icons/unicode.svg'
 MAX_DISPLAYED = 100
 
 
@@ -112,7 +113,7 @@ class Plugin(PluginInstance, TriggerQueryHandler):
                 id=self.id(),
                 text=entry['char'],
                 subtext=f'{entry["cat"]}: {entry["name"]}',
-                iconUrls=[ICON_URL],
+                icon_factory=lambda: makeImageIcon(ICON_PATH),
                 actions=actions,
             )
             items.append(item)
@@ -126,7 +127,7 @@ class Plugin(PluginInstance, TriggerQueryHandler):
                 id=self.id(),
                 text='All',
                 subtext=f'{len(entries)}/{len(all_entries)} displayed',
-                iconUrls=[ICON_URL],
+                icon_factory=lambda: makeImageIcon(ICON_PATH),
                 actions=actions,
             )
             items.append(item)

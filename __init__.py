@@ -108,9 +108,9 @@ class Plugin(PluginInstance, TriggerQueryHandler):
             actions = []
             for key, value in get_entry_clips(entry).items():
                 copy_call = lambda value_=value: setClipboardText(value_)  # noqa: E731
-                actions.append(Action(f'{md_name}/{entry["char"]}/{key}', key, copy_call))
+                actions.append(Action(key, key, copy_call))
             item = StandardItem(
-                id=self.id(),
+                id=entry['char'],
                 text=entry['char'],
                 subtext=f'{entry["cat"]}: {entry["name"]}',
                 icon_factory=lambda: makeImageIcon(ICON_PATH),
@@ -124,7 +124,7 @@ class Plugin(PluginInstance, TriggerQueryHandler):
                 copy_call = lambda key_=key: setClipboardText(create_all_clipboard_text(key_, all_entries))  # noqa: E731
                 actions.append(Action(f'{md_name}/all/{key}', key, copy_call))
             item = StandardItem(
-                id=self.id(),
+                id='all',
                 text='All',
                 subtext=f'{len(entries)}/{len(all_entries)} displayed',
                 icon_factory=lambda: makeImageIcon(ICON_PATH),

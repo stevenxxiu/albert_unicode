@@ -1,23 +1,25 @@
+import itertools
 import json
 import subprocess
+from collections.abc import Generator
 from pathlib import Path
 from typing import Callable, TypedDict, override
 
 from albert import setClipboardText  # pyright: ignore[reportUnknownVariableType]
 from albert import (
     Action,
+    GeneratorQueryHandler,
+    Icon,
     Item,
     PluginInstance,
-    Query,
+    QueryContext,
     StandardItem,
-    TriggerQueryHandler,
-    makeImageIcon,
 )
 
 setClipboardText: Callable[[str], None]
 
-md_iid = '4.0'
-md_version = '1.4'
+md_iid = '5.0'
+md_version = '1.5'
 md_name = 'Unicode'
 md_description = 'Finds Unicode'
 md_license = 'MIT'
@@ -26,7 +28,7 @@ md_authors = ['@stevenxxiu']
 md_bin_dependencies = ['uni']
 
 ICON_PATH = Path(__file__).parent / 'icons/unicode.svg'
-MAX_DISPLAYED = 100
+PAGE_SIZE = 10
 
 
 class UniEntry(TypedDict):
@@ -78,10 +80,10 @@ def create_all_clipboard_text(action_name: str, entries: list[UniEntry]) -> str:
             raise ValueError
 
 
-class Plugin(PluginInstance, TriggerQueryHandler):
-    def __init__(self):
+class Plugin(PluginInstance, GeneratorQueryHandler):
+    def __init__(self) -> None:
         PluginInstance.__init__(self)
-        TriggerQueryHandler.__init__(self)
+        GeneratorQueryHandler.__init__(self)
 
     @override
     def synopsis(self, _query: str) -> str:
@@ -92,44 +94,29 @@ class Plugin(PluginInstance, TriggerQueryHandler):
         return 'u '
 
     @override
-    def handleTriggerQuery(self, query: Query) -> None:
-        query_str = query.string.strip()
+    def items(self, ctx: QueryContext) -> Generator[list[Item]]:
+        query_str = ctx.query.strip()
         if not query_str:
             return
 
-        all_entries = find_unicode(query_str)
-        entries = all_entries[:MAX_DISPLAYED]
+        entries = find_unicode(query_str)
 
-        items: list[Item] = []
         actions: list[Action]
         copy_call: Callable[[str], None]
 
-        for entry in entries:
-            actions = []
-            for key, value in get_entry_clips(entry).items():
-                copy_call = lambda value_=value: setClipboardText(value_)  # noqa: E731
-                actions.append(Action(key, key, copy_call))
-            item = StandardItem(
-                id=entry['char'],
-                text=entry['char'],
-                subtext=f'{entry["cat"]}: {entry["name"]}',
-                icon_factory=lambda: makeImageIcon(ICON_PATH),
-                actions=actions,
-            )
-            items.append(item)
-
-        if all_entries:
-            actions = []
-            for key, _value in get_entry_clips(entries[0]).items():
-                copy_call = lambda key_=key: setClipboardText(create_all_clipboard_text(key_, all_entries))  # noqa: E731
-                actions.append(Action(f'{md_name}/all/{key}', key, copy_call))
-            item = StandardItem(
-                id='all',
-                text='All',
-                subtext=f'{len(entries)}/{len(all_entries)} displayed',
-                icon_factory=lambda: makeImageIcon(ICON_PATH),
-                actions=actions,
-            )
-            items.append(item)
-
-        query.add(items)  # pyright: ignore[reportUnknownMemberType]
+        for batch in itertools.batched(entries, PAGE_SIZE):
+            items: list[Item] = []
+            for entry in batch:
+                actions = []
+                for key, value in get_entry_clips(entry).items():
+                    copy_call = lambda value_=value: setClipboardText(value_)  # noqa: E731
+                    actions.append(Action(key, key, copy_call))
+                item = StandardItem(
+                    id=entry['char'],
+                    text=entry['char'],
+                    subtext=f'{entry["cat"]}: {entry["name"]}',
+                    icon_factory=lambda: Icon.image(ICON_PATH),
+                    actions=actions,
+                )
+                items.append(item)
+            yield items
